@@ -1,2 +1,11 @@
-export { BunLibError, SlugValidationError } from './errors';
-export { createSlug, type SlugOptions } from './slug';
+export {
+  createProgressBar,
+  type ProgressBar,
+  type ProgressBarOptions,
+  type ProgressState,
+  type ProgressWritable,
+} from './progress';
+export {
+  ProgressConfigurationError,
+  TtyProgressError,
+} from './progress-error';

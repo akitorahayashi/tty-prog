@@ -1,8 +1,8 @@
-export class BunLibError extends Error {
+export class TtyProgressError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
     this.name = new.target.name;
   }
 }
 
-export class SlugValidationError extends BunLibError {}
+export class ProgressConfigurationError extends TtyProgressError {}

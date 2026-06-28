@@ -5,10 +5,10 @@
 ```text
 src/
   index.ts            Public export boundary
-  errors.ts           Library error base classes and feature errors
-  <feature>.ts        Focused library feature modules
+  progress.ts         Progress bar implementation and public progress types
+  progress-error.ts   Library error classes
 tests/
-  <feature>.test.ts   Public behavior tests for feature modules
+  progress.test.ts    Public behavior tests for progress rendering
 ```
 
 ## Architecture
@@ -19,11 +19,13 @@ tests/
 
 ### Feature Modules
 
-Feature modules expose small, typed APIs. Each module owns its validation rules and throws library-specific errors for invalid input.
+Feature modules expose small, typed APIs. The progress module owns its
+validation rules and throws library-specific errors for invalid input.
 
 ### Errors
 
-`errors.ts` exports `BunLibError` as the shared library error base. Feature-specific errors extend `BunLibError`.
+`progress-error.ts` exports `TtyProgressError` as the shared library error
+base. Feature-specific errors extend `TtyProgressError`.
 
 ## Development Commands
 
