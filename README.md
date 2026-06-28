@@ -1,6 +1,6 @@
-# bun-lib
+# tty-prog
 
-A Bun and TypeScript library template.
+TTY progress bar rendering for Bun and TypeScript CLIs.
 
 ## Setup
 
@@ -11,11 +11,23 @@ bun install
 ## Usage
 
 ```ts
-import { createSlug } from 'bun-lib';
+import { createProgressBar } from 'tty-prog';
 
-const slug = createSlug('Hello, Bun Library!');
-console.log(slug);
+const progress = createProgressBar({
+  total: 10,
+  label: 'starting',
+  stream: process.stderr,
+  isTty: process.stderr.isTTY === true,
+});
+
+progress.setLabel('processing item 1');
+progress.advance();
+progress.finish();
 ```
+
+TTY streams render an animated single-line progress bar. Non-TTY streams emit
+one log line per render. Progress output is disabled only when `enabled: false`
+is set explicitly.
 
 ## Development
 
@@ -25,4 +37,5 @@ bun run check
 bun test
 ```
 
-The package exports its public API from `src/index.ts`. Bun projects can consume the repository directly from a GitHub URL dependency.
+The package exports its public API from `src/index.ts`. Bun projects can
+consume the repository directly from a GitHub URL dependency.

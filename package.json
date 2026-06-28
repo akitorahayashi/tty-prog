@@ -1,7 +1,7 @@
 {
-  "name": "bun-lib",
+  "name": "tty-prog",
   "version": "0.1.0",
-  "description": "Bun and TypeScript library template",
+  "description": "TTY progress bar rendering for Bun and TypeScript CLIs",
   "license": "UNLICENSED",
   "packageManager": "bun@1.3.14",
   "private": true,
