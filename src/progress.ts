@@ -59,6 +59,10 @@ interface Style {
   dim(text: string): string;
 }
 
+interface UnrefableTimer {
+  unref?: () => void;
+}
+
 const noopProgressBar: ProgressBar = {
   advance() {},
   finish() {},
@@ -83,7 +87,12 @@ export function createProgressBar(options: ProgressBarOptions): ProgressBar {
     return noopProgressBar;
   }
 
-  const stream = options.stream ?? process.stderr;
+  const stream = options.stream ?? defaultStream();
+  if (stream === undefined) {
+    throw new ProgressConfigurationError(
+      'A writable stream must be provided when process.stderr is not available.',
+    );
+  }
   const isTty = options.isTty ?? stream.isTTY === true;
   const renderLabel = options.renderLabel ?? ((state) => state.label);
   let completed = 0;
@@ -123,6 +132,7 @@ export function createProgressBar(options: ProgressBarOptions): ProgressBar {
       frameIndex = (frameIndex + 1) % spinnerFrames.length;
       draw();
     }, spinnerIntervalMs);
+    unrefTimer(timer);
   }
 
   return {
@@ -166,6 +176,14 @@ export function createProgressBar(options: ProgressBarOptions): ProgressBar {
       draw();
     },
   };
+}
+
+function defaultStream(): ProgressWritable | undefined {
+  return typeof process === 'undefined' ? undefined : process.stderr;
+}
+
+function unrefTimer(timer: ReturnType<typeof setInterval>): void {
+  (timer as UnrefableTimer).unref?.();
 }
 
 function renderLine(options: RenderOptions): string {
