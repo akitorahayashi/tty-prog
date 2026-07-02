@@ -9,6 +9,8 @@ src/
   progress-error.ts   Library error classes
 tests/
   progress.test.ts    Public behavior tests for progress rendering
+scripts/
+  demo-progress.ts    Manual terminal demo run via `bun run demo`
 ```
 
 ## Architecture
@@ -33,6 +35,7 @@ base. Feature-specific errors extend `TtyProgressError`.
 bun run fix      # Biome autofix
 bun run check    # Biome lint + tsc --noEmit
 bun test         # Run all tests
+bun run demo     # Run the manual terminal demo in scripts/demo-progress.ts
 ```
 
 ## Development Guidelines
