@@ -28,6 +28,7 @@ export interface ProgressState {
 }
 
 export interface ProgressWritable {
+  columns?: number;
   isTTY?: boolean;
   write(text: string): void;
 }
@@ -51,6 +52,14 @@ interface RenderOptions {
   isTty: boolean;
   label: string;
   renderLabel: (state: ProgressState) => string;
+  total: number;
+}
+
+interface BarLineOptions {
+  barWidth: number;
+  completed: number;
+  frame: string;
+  isTty: boolean;
   total: number;
 }
 
@@ -99,30 +108,40 @@ export function createProgressBar(options: ProgressBarOptions): ProgressBar {
   let frameIndex = 0;
   let label = options.label ?? '';
   let finished = false;
+  let hasDrawnTty = false;
   let timer: ReturnType<typeof setInterval> | undefined;
 
+  const currentLabel = () => renderLabel({ completed, label, total });
+
   const draw = () => {
+    if (!isTty) {
+      stream.write(
+        `${renderLine({
+          barWidth,
+          completed,
+          frame: '',
+          isTty,
+          label,
+          renderLabel,
+          total,
+        })}\n`,
+      );
+      return;
+    }
+
+    const barLine = renderBarLine({
+      barWidth,
+      completed,
+      frame: spinnerFrames[frameIndex] as string,
+      isTty,
+      total,
+    });
+    const labelLine = renderLabelLine(currentLabel(), isTty, stream.columns);
+
     stream.write(
-      isTty
-        ? `\x1b[2K\r${renderLine({
-            barWidth,
-            completed,
-            frame: spinnerFrames[frameIndex] as string,
-            isTty,
-            label,
-            renderLabel,
-            total,
-          })}`
-        : `${renderLine({
-            barWidth,
-            completed,
-            frame: '',
-            isTty,
-            label,
-            renderLabel,
-            total,
-          })}\n`,
+      `${hasDrawnTty ? '\x1b[1A' : ''}\x1b[2K\r${barLine}\n\x1b[2K\r${labelLine}`,
     );
+    hasDrawnTty = true;
   };
 
   draw();
@@ -155,17 +174,14 @@ export function createProgressBar(options: ProgressBarOptions): ProgressBar {
         clearInterval(timer);
       }
       if (isTty) {
-        stream.write(
-          `\x1b[2K\r${renderLine({
-            barWidth,
-            completed,
-            frame: ' ',
-            isTty,
-            label: '',
-            renderLabel,
-            total,
-          })}\n`,
-        );
+        const barLine = renderBarLine({
+          barWidth,
+          completed,
+          frame: ' ',
+          isTty,
+          total,
+        });
+        stream.write(`\x1b[2K\r\x1b[1A\x1b[2K\r${barLine}\n`);
       }
     },
     setLabel(nextLabel) {
@@ -215,6 +231,87 @@ function renderLine(options: RenderOptions): string {
   return renderedLabel === ''
     ? prefix
     : `${prefix}  ${style.dim(renderedLabel)}`;
+}
+
+function renderBarLine(options: BarLineOptions): string {
+  const style = makeStyle(options.isTty);
+  const filled =
+    options.total === 0
+      ? options.barWidth
+      : Math.min(
+          options.barWidth,
+          Math.round((options.completed / options.total) * options.barWidth),
+        );
+  const bar =
+    style.cyan('━'.repeat(filled)) +
+    style.dim('─'.repeat(options.barWidth - filled));
+  const totalText = String(options.total);
+  const count = `${String(options.completed).padStart(
+    totalText.length,
+  )}/${totalText}`;
+
+  return `${style.cyan(options.frame)} ${bar}  ${count}`;
+}
+
+function renderLabelLine(
+  label: string,
+  isTty: boolean,
+  columns: number | undefined,
+): string {
+  if (label === '') {
+    return '';
+  }
+  const style = makeStyle(isTty);
+  const indent = '  ';
+  const text =
+    columns === undefined
+      ? label
+      : truncateToWidth(label, columns - 1 - indent.length);
+
+  return `${indent}${style.dim(text)}`;
+}
+
+function truncateToWidth(text: string, maxWidth: number): string {
+  if (maxWidth <= 0) {
+    return '';
+  }
+  if (displayWidth(text) <= maxWidth) {
+    return text;
+  }
+  let width = 0;
+  let kept = '';
+  for (const character of text) {
+    const characterWidth = displayWidth(character);
+    if (width + characterWidth > maxWidth - 1) {
+      break;
+    }
+    kept += character;
+    width += characterWidth;
+  }
+  return `${kept}…`;
+}
+
+function displayWidth(text: string): number {
+  let width = 0;
+  for (const character of text) {
+    width += isWideCodePoint(character.codePointAt(0) ?? 0) ? 2 : 1;
+  }
+  return width;
+}
+
+function isWideCodePoint(codePoint: number): boolean {
+  return (
+    (codePoint >= 0x1100 && codePoint <= 0x115f) ||
+    (codePoint >= 0x2e80 && codePoint <= 0xa4cf) ||
+    (codePoint >= 0xac00 && codePoint <= 0xd7a3) ||
+    (codePoint >= 0xf900 && codePoint <= 0xfaff) ||
+    (codePoint >= 0xfe30 && codePoint <= 0xfe4f) ||
+    (codePoint >= 0xff00 && codePoint <= 0xff60) ||
+    (codePoint >= 0xffe0 && codePoint <= 0xffe6) ||
+    (codePoint >= 0x1f300 && codePoint <= 0x1f64f) ||
+    (codePoint >= 0x1f900 && codePoint <= 0x1faff) ||
+    (codePoint >= 0x20000 && codePoint <= 0x3fffd)
+  );
 }
 
 function validNonNegativeInteger(value: number, name: string): number {
