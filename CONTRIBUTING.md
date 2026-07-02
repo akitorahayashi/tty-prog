@@ -6,6 +6,7 @@ This repository owns:
 
 - `src/` — public exports, feature modules, and library errors
 - `tests/` — package behavior tests
+- `scripts/` — manual demo scripts, not part of the published API
 - `.github/workflows/` — CI automation
 
 ## Workflow
