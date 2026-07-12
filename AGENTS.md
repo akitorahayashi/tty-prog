@@ -1,4 +1,9 @@
-# AGENTS.md
+# tty-prog
+
+`tty-prog` renders TTY progress bars for Bun and TypeScript CLIs. It exposes a
+small, typed progress API behind the public export boundary at `src/index.ts`,
+drawing an in-place animated bar on TTY streams and one combined log line per
+update on non-TTY streams.
 
 ## Directory Structure
 
